@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using NSubstitute;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -64,8 +65,52 @@ namespace IsolatedByInheritanceAndOverride.Test
         {
             // hard to isolate dependency to unit test
 
-            //var target = new OrderService();
-            //target.SyncBookOrders();
+            var target = new FakeOrderService();
+            var fakeBookDao = Substitute.For<IBookDao>();
+            target.SetBookDao(fakeBookDao);
+            target.SyncBookOrders();
+            fakeBookDao.Received(2).Insert(Arg.Is<Order>(x=>x.Type=="Book"));
+        }
+
+        class FakeOrderService : OrderService
+        {
+            public IBookDao BookDao { get; set; }
+            protected override IBookDao GetBookDao()
+            {
+                return BookDao;
+            }
+
+            public void SetBookDao(IBookDao bookDao)
+            {
+                BookDao = bookDao;
+            }
+
+            protected override List<Order> GetOrders()
+            {
+                var result = new List<Order>()
+                {
+                    new Order()
+                    {
+                        Type = "Book",
+                        CustomerName = "joey",
+                        Price = 10,
+                        ProductName = "p"
+                    },new Order()
+                    {
+                        Type = "Book",
+                        CustomerName = "joey",
+                        Price = 10,
+                        ProductName = "p"
+                    },new Order()
+                    {
+                        Type = "Toy",
+                        CustomerName = "joey",
+                        Price = 10,
+                        ProductName = "p"
+                    }
+                };
+                return result;
+            }
         }
     }
 }
